@@ -1,0 +1,18 @@
+---
+- name: This sets up an httpd webserver
+  hosts: webservers
+  vars:
+    myname: "Laxman Kadam"
+    package: "httpd"
+    service: "httpd"
+  tasks:
+  - name: Install the httpd 
+    yum: name={{ package }}
+    become: yes
+  - name: start the httpd service
+    service: name={{ service }} state=started
+  - name: Ansible prompt example.
+    debug: 
+      msg: "{{ myname }}"
+
+

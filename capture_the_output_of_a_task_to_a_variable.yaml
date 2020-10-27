@@ -1,0 +1,9 @@
+---
+- hosts: webservers
+  become: yes
+  tasks:
+  - name: "Using register"
+    shell: "find *.yaml"
+    register: find_output
+  - debug:
+      var: find_output

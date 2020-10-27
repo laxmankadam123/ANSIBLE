@@ -1,0 +1,52 @@
+$ ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
+$ ansible-playbook release.yml -e "version=1.23.45 other_variable=foo"
+ 
+In your yml file you assign these to scoped ansible variables by doing something like:
+ 
+vars:
+    my_version: "{{ version }}"
+    my_other_variable: {{ other_variable }}
+ 
+----
+
+# To set a environmental variables
+$ export version=1.23.45
+$ export other_variable=foo"
+ 
+vars:
+    my_version: "{{ lookup('env', 'version') }}"
+    my_other_variable: {{ lookup('env', 'other_variable') }}
+ 
+---
+
+$ ansible-playbook release.yml --extra-vars "@some_file.json"
+$ ansible-playbook release.yml -e "@some_file.json"
+$ ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo" --extra-vars "@some_file.json"
+$ ansible-playbook release.yml -e "version=1.23.45 other_variable=foo" --extra-vars "@some_file.json"
+
+---
+
+ hosts: all
+  gather_facts: no
+  tasks:
+    - debug: var=test_list
+ 
+And how to pass in test_list to ansible-playbook:
+$ ansible-playbook -c local -i localhost, test.yml --extra-vars='{"test_list": [1,2,3]}'
+
+---
+
+$ ansible-playbook extra_var_multiple.yml --extra-var "my_var1=CoolVar1 my_var2=WarmVar2"
+ 
+PASSING VARIABLES CONTAINING SPACES.
+$ ansible-playbook extra_var_single.yml -e "my_var='Very Hot Var with spaces'"
+ 
+#PASSING INTEGER, BOOL, LIST, OR ANY OTHER NON-STRING VALUES.
+ansible-playbook extra_var_json.yml -e '{"my_float": 1.618, "my_list": ["HGTTG", 42], "my_string": "Time is an illusion."}'
+ 
+#PASSING JSON FORMATTED VARIABLES SAVED IN A FILE
+[przemek@quasar extra_var]$ cat extra_vars.json
+{"my_float": 1.618, "my_list": ["HGTTG", 42], "my_string": "Time is an illusion."}
+ 
+ansible-playbook extra_var_json.yml -e "@extra_vars.json"
+ 
