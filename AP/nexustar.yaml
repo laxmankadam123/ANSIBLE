@@ -1,0 +1,58 @@
+---
+- hosts: webservers
+  tasks:
+    - name: Deploy Tar File
+      maven_artifact:
+        group_id: sample
+        artifact_id: tar
+        extension: zip
+        repository_url: 'http://localhost:8081/repository/mytar/'
+        username: admin
+        password: admin123
+        mode: 0755
+        owner: tomcat1
+        group: tomcat1
+        dest: /opt/tomcat/webapps/
+      become: yes
+
+    - name: get current date
+      set_fact: bkpdate="{{ lookup('pipe', 'date +%Y.%m.%d.%H.%M.%S') }}"
+
+
+   # - name: create directory with a date in name
+   #   file: path="/var/build_backups/cops/custom/{{ bkpdate }}"
+   #         state=directory
+   #         mode=0755
+   #   become: yes    
+
+    - name: backup Tar
+      shell: |
+        cd /opt/tomcat/webapps/ 
+        zip -r /var/build_backups/cops/custom/{{ bkpdate }}.zip tar-latest.zip
+      become: yes
+
+    - name: Unzip file
+      unarchive:
+        src: /opt/tomcat/webapps/tar-latest.zip
+        dest: /opt/tomcat/webapps/
+        copy: no 
+        mode: 0755 
+        owner: tomcat1 
+        group: tomcat1 
+      become: yes
+
+    - name: Delete remote war file
+      file: path=/opt/tomcat/webapps/tar-latest.zip state=absent
+      become: yes
+   
+    - name: Stop Server
+      service:
+        name: tomcat
+        state: stopped
+      become: yes
+
+    - name: Start Server
+      service: 
+        name: tomcat
+        state: started
+      become: yes 

@@ -1,0 +1,98 @@
+---
+- hosts: webservers
+  tasks:
+    - name: Install java
+      yum:
+         name: java
+         state: latest
+      become: yes
+      
+    - name: Add tomcat group
+      group:
+        name: tomcat1
+      become: yes
+
+    - name: Add "tomcat" user
+      user:
+        name: tomcat1
+        group: tomcat1
+        home: /opt/tomcat
+        createhome: no
+        system: yes
+      become: yes
+
+    - name: Download Tomcat using get_url
+      get_url:
+       url: https://downloads.apache.org/tomcat/tomcat-9/v9.0.38/bin/apache-tomcat-9.0.38.tar.gz
+       dest: /tmp/
+
+    - name: Create a tomcat directory
+      file:
+        path: /opt/tomcat
+        state: directory
+        owner: tomcat1
+        group: tomcat1
+      become: yes
+ 
+    - name: Extract tomcat archive
+      unarchive:
+       src: /tmp/apache-tomcat-9.0.38.tar.gz 
+       dest: /opt/tomcat
+       owner: tomcat1
+       group: tomcat1
+       extra_opts: "--strip-components=1"
+      become: yes
+
+    - name: Copy systemd service file to server
+      copy:
+        src:  tomcat-service.txt
+        dest: /etc/systemd/system/tomcat.service
+      become: yes
+
+    - name: Start and enable tomcat
+      service:
+        daemon_reload: yes
+        name: tomcat
+        state: started
+        enabled: yes
+      become: yes
+
+    - name: Start and enable firewalld
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+      become: yes
+
+    - name: Open tomcat port on the firewall
+      firewalld:
+        port: 8080/tcp
+        permanent: true
+        state: enabled
+        immediate: yes
+      become: yes
+
+    - name: version="1.0">
+      blockinfile:               
+        path: /opt/tomcat/conf/tomcat-users.xml
+        insertafter: 'version="1.0">'
+        state: present
+        block: |
+          <role rolename="manager-gui"/>
+          <user username="manager" password="manager@123" roles="manager-gui"/>
+
+          <role rolename="admin-gui"/>
+          <user username="admin" password="admin@123" roles="admin-gui"/>
+      become: yes
+
+    - name: Restart service tomcat, in all cases
+      service:
+        name: tomcat
+        state: restarted
+      become: yes
+
+
+    - name: copy war file
+      shell: cp /home/lucky/ANSIBLE/SampleWebApp.war   /opt/tomcat/webapps/
+      become: yes
+     

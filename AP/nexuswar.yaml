@@ -1,0 +1,47 @@
+---
+- hosts: webservers
+  tasks:
+    - name: Deploy War File
+      maven_artifact:
+        group_id: AP
+        artifact_id: SampleWebApp
+        extension: war
+        repository_url: 'http://192.168.43.244:8081/repository/HBS/'
+        username: admin
+        password: admin123
+        version: latest
+        mode: 0755
+        owner: tomcat1
+        group: tomcat1
+        dest: /opt/tomcat/webapps/
+      become: yes
+
+    - name: get current date
+      set_fact: bkpdate="{{ lookup('pipe', 'date +%Y.%m.%d.%H.%M.%S') }}"
+    
+    - name: create directory with a date in name
+      file: path="/opt/tomcat/{{ bkpdate }}"
+            state=directory
+            mode=0755
+      become: yes
+
+    - name: backup war
+      shell: |
+        cd /opt/tomcat/webapps/ 
+        zip -r /var/build_backups/cops/custom/{{ bkpdate }}.zip /opt/tomcat/webapps/
+      become: yes
+
+    - name: Stop Server
+      service:
+        name: tomcat
+        state: stopped
+      become: yes
+
+    - name: Start Server
+      service: 
+        name: tomcat
+        state: started
+      become: yes 
+      
+
+
