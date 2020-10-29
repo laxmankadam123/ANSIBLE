@@ -1,0 +1,22 @@
+---
+- hosts: webservers
+  tasks:
+    - name: Deploy Tar File
+      maven_artifact:
+        group_id: sample
+        artifact_id: tar
+        extension: zip
+        repository_url: 'http://localhost:8081/repository/mytar/'
+        username: admin
+        password: admin123
+        mode: 0755
+        owner: root
+        group: root
+        dest: /app/
+      become: yes
+    - name: unzip files
+      shell: |
+        find /app/ -name '*.zip' -exec sh -c 'unzip -d `dirname {}` {}' ';'
+        find /app/ -name "*.zip" -exec rm -rf {} \;
+      become: yes
+
