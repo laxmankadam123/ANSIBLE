@@ -14,9 +14,22 @@
         group: root
         dest: /app/
       become: yes
+    - name: get current date
+      set_fact: bkpdate="{{ lookup('pipe', 'date +%Y.%m.%d.%H.%M.%S') }}"
+    - name: Take the Backup of Downloaded Package
+      shell: |
+        cd /app/
+        zip -Ru /bkp/{{ bkpdate }} '*.zip'
+      become: yes  
     - name: unzip files
       shell: |
-        find /app/ -name '*.zip' -exec sh -c 'unzip -d `dirname {}` {}' ';'
+        find /app/ -name '*.zip' -exec sh -c 'unzip -od `dirname {}` {}' ';'
+      become: yes
+    - name: print message
+      debug:
+        msg: 'Delete Downloaded Package from /app/'
+    - name: Delete Package
+      shell: |
         find /app/ -name "*.zip" -exec rm -rf {} \;
       become: yes
 
