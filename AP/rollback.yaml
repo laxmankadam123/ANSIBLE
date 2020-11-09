@@ -1,0 +1,16 @@
+---
+- hosts: webservers
+  tasks:
+    - name: get the previous version file 
+      shell: |
+        cd /bkp 
+        ls -tr | tail -n 2 | head -n 1
+      register: latest_bkp   
+      become: yes
+    - debug: msg="{{ latest_bkp.stdout_lines }}"    
+      become: yes   
+    - name: Copy the old version file to restore path  
+      shell: cp -rf /bkp/{{ item }} /home/lucky/sample/{{ item }} 
+      with_items: "{{ latest_bkp.stdout_lines }}" 
+      become: yes
+
