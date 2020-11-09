@@ -1,0 +1,41 @@
+---
+- hosts: webservers
+  tasks:
+    - name: Deploy Tar File
+      maven_artifact:
+        group_id: ant
+        artifact_id: zipfile
+        extension: zip
+        repository_url: 'http://localhost:8081/repository/ant/'
+        username: admin
+        password: admin123
+        mode: 0755
+        owner: root
+        group: root
+        dest: /app/
+      become: yes
+    - name: get current date
+      set_fact: bkpdate="{{ lookup('pipe', 'date +%Y.%m.%d.%H.%M.%S') }}"
+      become: yes
+    - name: Take the Backup of Downloaded Package
+      shell: |
+        zip  /bkp/{{ bkpdate }}.zip /app/*.zip
+      become: yes  
+    - name: unzip files
+      shell: |
+        find /app/ -name '*.zip' -exec sh -c 'unzip -od `dirname {}` {}' ';'
+      become: yes
+    - name: Call build
+      shell: |
+        cd /app/ant-sample/
+        ant clean
+      become: yes
+    - name: print message
+      debug:
+        msg: 'Delete Downloaded Package from /app/'
+    - name: Delete Package
+      shell: |
+        find /app/ -name "*.zip" -exec rm -rf {} \;
+      become: yes
+
+ 
